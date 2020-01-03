@@ -1,0 +1,51 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+#timeline {
+  width: 99%;
+  height: 400px;
+}
+
+text {
+  font-family: "ProximaNova",Helvetica,Arial,sans-serif;
+  font-size: 12px;
+}
+
+rect {
+  fill: none;
+  stroke: #000;
+}
+path {
+  fill: none;
+  stroke-width: 2;
+  stroke: #333;
+}
+
+path.light {
+  stroke: #3c6da8;
+}
+
+path.dark {
+  stroke: #df2929;
+}
+
+.intro text:first-child {
+  fill: #fff;
+  stroke: #f9f9f9;
+  stroke-width: 3;
+}
+
+.intro text+text {
+  fill: #333;
+}
+
+.intro text+text.dark {
+  fill: #df2929;
+}
+
+.intro text+text.light {
+  fill: #3c6da8;
+}
