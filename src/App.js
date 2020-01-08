@@ -5,7 +5,48 @@ import * as d3 from 'd3';
 import * as d3_narrative_charts from 'd3-narrative-charts';
 import './App.css';
 
-function doit(ref) {
+function groupRows(acc, curr) {
+    let row = acc[curr.gs$cell.row];
+    if (row) {
+        row.push(curr);
+    } else {
+        acc[curr.gs$cell.row] = [curr];
+    }
+    return acc;
+}
+
+let characterMap = {};
+
+function getCharacterObjectForCharacterName(name) {
+    var character = characterMap[name];
+    if (!character) {
+        let id = "c" + Object.values(characterMap).length;
+        character = {id: id, name: name, affiliation: "Humans"};
+        characterMap[name] = character;
+    }
+    return character;
+}
+
+function transformCellsToScene(cells) {
+    let cell = cells.filter(cell => cell.gs$cell.col === "2");
+    return {
+        characters:
+            cell.flatMap(cell => cell.gs$cell.inputValue.split(","))
+                .map(entry => {
+                    return getCharacterObjectForCharacterName(entry.trim());
+                }),
+        description:
+            cells.filter(cell => cell.gs$cell.col === "3")
+                .map(cell => cell.gs$cell.inputValue)[0]
+    };
+}
+
+function transformSheetToScenes(sheet) {
+    let cells = sheet.feed.entry;
+    return Object.values(cells.concat({}).reduceRight(groupRows)).map(transformCellsToScene);
+}
+
+function doit(ref, scenes2) {
     // Request the data
     d3.json('data.json', function(err, response){
 
@@ -14,11 +55,15 @@ function doit(ref) {
         // Get the data in the format we need to feed to d3.layout.narrative().scenes
         scenes = wrangle(response);
 
+        console.log(scenes);
+        scenes2 = transformSheetToScenes(scenes2);
+        console.log(scenes2);
+        scenes = scenes2;
+
         // Some defaults
         sceneWidth = 10;
         width = scenes.length * sceneWidth * 4;
         height = 600;
-        let labelSize = [150,15];
 
         // The container element (this is the HTML fragment);
         svg = d3.select(ref).append('svg')
@@ -71,7 +116,8 @@ function doit(ref) {
             .attr('y', 0)
             .attr('x', 0)
             .attr('rx', 3)
-            .attr('ry', 3);
+            .attr('ry', 3)
+            .on('mouseover', (d, i) => console.log(d));
 
         // Draw appearances
         svg.selectAll('.scene').selectAll('.appearance').data(function(d){
@@ -156,7 +202,6 @@ function doit(ref) {
 
         // Helper to get characters by ID from the raw data
         function characterById(id) {
-            charactersMap = charactersMap || {};
             charactersMap[id] = charactersMap[id] || data.characters.find(function(character){
                 return character.id === id;
             });
@@ -168,24 +213,8 @@ function doit(ref) {
 
 class App extends Component {
 
-    // constructor() {
-    //     super();
-    //     setTimeout(() => {
-    //         const temperatureData = [8, 5, 13, 9, 12];
-    //         d3.select(this.refs.temperatures)
-    //             .selectAll("h2")
-    //             .data(temperatureData)
-    //             .enter()
-    //             .append("h2")
-    //             .text("New Temperature");
-    //     }, 3000);
-    // }
-
-    width = 600;
-    height = 600;
-
     async componentDidMount() {
-        // let objects = await (await fetch("t.json")).json();
+        let objects = await (await fetch("t.json")).json();
         // let names = Array.from(new Set(objects.feed.entry.map(entry => entry.gs$cell)
         //     .filter(entry => entry.col === "2")
         //     .flatMap(entry => entry.inputValue.split(","))
@@ -199,7 +228,7 @@ class App extends Component {
         //     .attr('height', this.height);
         //
         // let scenes = this.makeScenes(objects);
-        doit(this.refs.timeline);
+        doit(this.refs.timeline, objects);
             // .selectAll("h2")
             // .data(names)
             // .enter()
