@@ -5,6 +5,21 @@ import * as d3 from 'd3';
 import * as d3_narrative_charts from 'd3-narrative-charts';
 import './App.css';
 
+function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function convertUSDataToLocal(usDateString) {
+    let usDateRegex = /(\d+)\/(\d+)\/(\d+)/g;
+    let elements = usDateRegex.exec(usDateString);
+    if (elements && elements.length === 4) {
+        let ms = Date.parse("" + elements[3] + "-" + elements[1] + "-" + elements[2]);
+        let dateString = new Date(ms).toLocaleDateString(navigator.language, { dateStyle: 'full' });
+        return capitalize(dateString);
+    }
+    return usDateString;
+}
+
 function groupRows(acc, curr) {
     let row = acc[curr.gs$cell.row];
     if (row) {
@@ -37,13 +52,16 @@ function transformCellsToScene(cells) {
                 }),
         description:
             cells.filter(cell => cell.gs$cell.col === "3")
+                .map(cell => cell.gs$cell.inputValue)[0],
+        date:
+            cells.filter(cell => cell.gs$cell.col === "1")
                 .map(cell => cell.gs$cell.inputValue)[0]
     };
 }
 
 function transformSheetToScenes(sheet) {
     let cells = sheet.feed.entry;
-    return Object.values(cells.concat({}).reduceRight(groupRows)).map(transformCellsToScene);
+    return Object.values(cells.concat({}).reduceRight(groupRows)).map(transformCellsToScene).filter(event => event.date);
 }
 
 function doit(ref, scenes2) {
@@ -101,7 +119,8 @@ function doit(ref, scenes2) {
 
         // Draw the scenes
         svg.selectAll('.scene').data(narrative.scenes()).enter()
-            .append('g').attr('class', 'scene')
+            .append('g')
+            .attr('class', 'scene')
             .attr('transform', function(d){
                 var x,y;
                 x = Math.round(d.x)+0.5;
@@ -117,7 +136,31 @@ function doit(ref, scenes2) {
             .attr('x', 0)
             .attr('rx', 3)
             .attr('ry', 3)
-            .on('mouseover', (d, i) => console.log(d));
+            .on('mouseover', tull)
+            .on('mouseout', (d, i) => {
+                console.log("out");
+                d3.select(this).attr('class', 'scene');
+            });
+
+        function tull(d, i) {
+            d3.select(this).attr('class', 'selected-scene');
+            d3.select('.scene-description').text(d.description);
+            d3.select('.scene-date').text(convertUSDataToLocal(d.date));
+            // d3.select(this).html(d.description)
+            //     .style("left", '0' + "px")
+            //     .style("top", '0' + "px");
+            // svg.append("text").attr({
+            //     id: "t" + d.x + "-" + d.y + "-" + i,  // Create an id for text so we can select it later for removing on mouseout
+            //     x: function() { return d.x; },
+            //     y: function() { return d.y; }
+            // }).text(() => d.description);
+            console.log(d);
+        }
+
+        // Tooltip
+        // d3.select('body')
+        //     .append('div')
+        //     .attr('id', 'tooltip');
 
         // Draw appearances
         svg.selectAll('.scene').selectAll('.appearance').data(function(d){
@@ -151,11 +194,10 @@ function doit(ref, scenes2) {
 
             g = s.append('g').attr('class', 'intro');
 
-            g.append('rect')
+            g.append('circle')
                 .attr('y', -4)
                 .attr('x', -4)
-                .attr('width', 4)
-                .attr('height', 8);
+                .attr('r', 4);
 
             text = g.append('g').attr('class','text');
 
@@ -238,7 +280,13 @@ class App extends Component {
     }
 
     render() {
-        return <div ref="timeline">&nbsp;</div>;
+        return <div>
+            <div ref="timeline">&nbsp;</div>
+            <div>
+                <div className="scene-date"/>
+                <div className="scene-description"/>
+            </div>
+        </div>;
     }
 
     // render() {
