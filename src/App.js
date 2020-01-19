@@ -9,6 +9,10 @@ function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+function makeClassName(string) {
+    return string.toLowerCase().replace(/ /g, '_');
+}
+
 function convertUSDataToLocal(usDateString) {
     let usDateRegex = /(\d+)\/(\d+)\/(\d+)/g;
     let elements = usDateRegex.exec(usDateString);
@@ -62,6 +66,17 @@ function transformCellsToScene(cells) {
 function transformSheetToScenes(sheet) {
     let cells = sheet.feed.entry;
     return Object.values(cells.concat({}).reduceRight(groupRows)).map(transformCellsToScene).filter(event => event.date);
+}
+
+function deselectPath(svg, characterName) {
+    svg.selectAll('.' + makeClassName(characterName))
+        .transition().duration(250)
+        .attr('stroke-width', 1);
+}
+
+function selectPath(svg, characterName) {
+    svg.selectAll('.' + makeClassName(characterName))
+        .attr('stroke-width', 3);
 }
 
 function doit(ref, scenes2) {
@@ -127,6 +142,8 @@ function doit(ref, scenes2) {
                 y = Math.round(d.y)+0.5;
                 return 'translate('+[x,y]+')';
             })
+            .on('mouseover', tull)
+            .on('mouseout', ball)
             .append('rect')
             .attr('width', sceneWidth)
             .attr('height', function(d){
@@ -135,26 +152,19 @@ function doit(ref, scenes2) {
             .attr('y', 0)
             .attr('x', 0)
             .attr('rx', 3)
-            .attr('ry', 3)
-            .on('mouseover', tull)
-            .on('mouseout', (d, i) => {
-                console.log("out");
-                d3.select(this).attr('class', 'scene');
-            });
+            .attr('ry', 3);
+
+        function ball(d, i) {
+            d3.select(this).attr('class', 'scene');
+            d.characters.forEach(character => deselectPath(svg, character.name));
+        }
 
         function tull(d, i) {
-            d3.select(this).attr('class', 'selected-scene');
+            console.log(d);
+            d.characters.forEach(character => selectPath(svg, character.name));
+            d3.select(this).attr('class', 'scene-selected');
             d3.select('.scene-description').text(d.description);
             d3.select('.scene-date').text(convertUSDataToLocal(d.date));
-            // d3.select(this).html(d.description)
-            //     .style("left", '0' + "px")
-            //     .style("top", '0' + "px");
-            // svg.append("text").attr({
-            //     id: "t" + d.x + "-" + d.y + "-" + i,  // Create an id for text so we can select it later for removing on mouseout
-            //     x: function() { return d.x; },
-            //     y: function() { return d.y; }
-            // }).text(() => d.description);
-            console.log(d);
         }
 
         // Tooltip
@@ -183,9 +193,12 @@ function doit(ref, scenes2) {
         svg.selectAll('.link').data(narrative.links()).enter()
             .append('path')
             .attr('class', function(d) {
-                return 'link ' + d.character.affiliation.toLowerCase();
+                return 'link ' + makeClassName(d.character.affiliation) + " " + makeClassName(d.character.name);
             })
-            .attr('d', narrative.link());
+            .attr('stroke-width', 1)
+            .attr('d', narrative.link())
+            .on('mouseover', (d, i) => selectPath(svg, d.character.name))
+            .on('mouseout', (d, i) => deselectPath(svg, d.character.name));
 
         // Draw intro nodes
         svg.selectAll('.intro').data(narrative.introductions())
@@ -216,7 +229,9 @@ function doit(ref, scenes2) {
                 .attr('text-anchor', 'end')
                 .attr('y', '4px')
                 .attr('x', '-8px')
-                .text(function(d){ return d.character.name; });
+                .text(function(d){ return d.character.name; })
+                .on('mouseover', d => selectPath(svg, d.character.name))
+                .on('mouseout', d => deselectPath(svg, d.character.name));
 
             g.select('.color')
                 .attr('class', function(d){
