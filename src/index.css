@@ -1,3 +1,9 @@
+:root {
+  --selected_scene: #6ba8a9;
+  --non_selected_scene: #357376;
+  --path_link: #1d4d4f;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -14,24 +20,30 @@ text {
   font-size: 12px;
 }
 
+text .intro-text {
+  color: var(--path_link);
+}
+
+.character-link {
+  fill: var(--path_link)
+}
+
 div .scene-date {
   font-weight: bold;
 }
 
 .scene-selected rect {
-  fill: green;
+  fill: var(--non_selected_scene);
   fill-opacity: 0.5;
-  stroke: #000;
 }
 
 .scene rect {
-  fill: red;
+  fill: var(--selected_scene);
   fill-opacity: 0.5;
-  stroke: #000;
 }
 path {
   fill: none;
-  stroke: #333;
+  stroke: var(--path_link);
 }
 
 path.light {
@@ -49,7 +61,7 @@ path.dark {
 }
 
 .intro text+text {
-  fill: #333;
+  fill: var(--path_link);
 }
 
 .intro text+text.dark {

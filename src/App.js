@@ -71,12 +71,14 @@ function transformSheetToScenes(sheet) {
 function deselectPath(svg, characterName) {
     svg.selectAll('.' + makeClassName(characterName))
         .transition().duration(250)
-        .attr('stroke-width', 1);
+        .attr('stroke-width', 1)
+        .attr('r', 2);
 }
 
 function selectPath(svg, characterName) {
     svg.selectAll('.' + makeClassName(characterName))
-        .attr('stroke-width', 3);
+        .attr('stroke-width', 3)
+        .attr('r', 4);
 }
 
 function doit(ref, scenes2) {
@@ -182,12 +184,12 @@ function doit(ref, scenes2) {
             .attr('cy', function(d){
                 return d.y;
             })
-            .attr('r', function(){
-                return 2;
-            })
+            .attr('r', 2)
             .attr('class', function(d){
-                return 'appearance ' + d.character.affiliation;
-            });
+                return 'appearance character-link ' + d.character.affiliation + " " + makeClassName(d.character.name);
+            })
+            .on('mouseover', d => selectPath(svg, d.character.name))
+            .on('mouseout', d => deselectPath(svg, d.character.name));
 
         // Draw links
         svg.selectAll('.link').data(narrative.links()).enter()
@@ -208,6 +210,7 @@ function doit(ref, scenes2) {
             g = s.append('g').attr('class', 'intro');
 
             g.append('circle')
+                .attr('class', 'character-link')
                 .attr('y', -4)
                 .attr('x', -4)
                 .attr('r', 4);
@@ -216,7 +219,7 @@ function doit(ref, scenes2) {
 
             // Apppend two actual 'text' nodes to fake an 'outside' outline.
             text.append('text');
-            text.append('text').attr('class', 'color');
+            text.append('text').attr('class', 'intro-text');
 
             g.attr('transform', function(d){
                 var x,y;
@@ -235,7 +238,7 @@ function doit(ref, scenes2) {
 
             g.select('.color')
                 .attr('class', function(d){
-                    return 'color ' + d.character.affiliation;
+                    return 'intro-text ' + makeClassName(d.character.affiliation);
                 });
 
             g.select('rect')
