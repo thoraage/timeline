@@ -1,35 +1,65 @@
 :root {
+  --background: #e5dfdf;
   --selected_scene: #6ba8a9;
   --non_selected_scene: #357376;
-  --path_link: #1d4d4f;
+  --character_line: #1d4d4f;
 }
 
 body {
+  background-color: var(--background);
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
+  font-family: "ProximaNova",Helvetica,Arial,sans-serif;
 }
 
-#timeline {
+.timeline {
   width: 99%;
   height: 400px;
+  overflow-y: auto;
+}
+
+div #timeline {
+  width: 99%;
+  overflow: scroll;
 }
 
 text {
-  font-family: "ProximaNova",Helvetica,Arial,sans-serif;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 text .intro-text {
-  color: var(--path_link);
+  color: var(--character_line);
+  background-color: black;
+}
+
+text .intro-text-selected {
+  color: var(--character_line);
 }
 
 .character-link {
-  fill: var(--path_link)
+  fill: var(--character_line)
+}
+
+div .scene-presentation {
+  background-color: var(--character_line);
+  color: var(--background);
+  width: 30%;
+  padding: 30pt;
+  position: absolute;
+  bottom: 0;
+  border-top-right-radius:30pt;
 }
 
 div .scene-date {
-  font-weight: bold;
+  font-style: italic;
+  font-size: 18px;
+  margin-bottom: 30pt;
+  text-align: right;
+}
+
+div .scene-description {
+  height: 100pt;
+  overflow-y: auto;
 }
 
 .scene-selected rect {
@@ -43,7 +73,7 @@ div .scene-date {
 }
 path {
   fill: none;
-  stroke: var(--path_link);
+  stroke: var(--character_line);
 }
 
 path.light {
@@ -54,14 +84,8 @@ path.dark {
   stroke: #df2929;
 }
 
-.intro text:first-child {
-  fill: #fff;
-  stroke: #f9f9f9;
-  stroke-width: 3;
-}
-
 .intro text+text {
-  fill: var(--path_link);
+  fill: var(--character_line);
 }
 
 .intro text+text.dark {

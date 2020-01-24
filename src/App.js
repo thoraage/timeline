@@ -51,9 +51,7 @@ function transformCellsToScene(cells) {
     return {
         characters:
             cell.flatMap(cell => cell.gs$cell.inputValue.split(","))
-                .map(entry => {
-                    return getCharacterObjectForCharacterName(entry.trim());
-                }),
+                .map(entry => getCharacterObjectForCharacterName(entry.trim())),
         description:
             cells.filter(cell => cell.gs$cell.col === "3")
                 .map(cell => cell.gs$cell.inputValue)[0],
@@ -65,7 +63,10 @@ function transformCellsToScene(cells) {
 
 function transformSheetToScenes(sheet) {
     let cells = sheet.feed.entry;
-    return Object.values(cells.concat({}).reduceRight(groupRows)).map(transformCellsToScene).filter(event => event.date);
+    return Object.values(cells.concat({})
+        .reduceRight(groupRows))
+        .map(transformCellsToScene)
+        .filter(event => event.date);
 }
 
 function deselectPath(svg, characterName) {
@@ -144,8 +145,8 @@ function doit(ref, scenes2) {
                 y = Math.round(d.y)+0.5;
                 return 'translate('+[x,y]+')';
             })
-            .on('mouseover', tull)
-            .on('mouseout', ball)
+            .on('mouseover', selectScene)
+            .on('mouseout', deselectScene)
             .append('rect')
             .attr('width', sceneWidth)
             .attr('height', function(d){
@@ -156,23 +157,24 @@ function doit(ref, scenes2) {
             .attr('rx', 3)
             .attr('ry', 3);
 
-        function ball(d, i) {
+        function deselectScene(d) {
             d3.select(this).attr('class', 'scene');
             d.characters.forEach(character => deselectPath(svg, character.name));
         }
 
-        function tull(d, i) {
+        function selectScene(d) {
             console.log(d);
             d.characters.forEach(character => selectPath(svg, character.name));
+            d3.selectAll('.scene-presentation *').transition().duration(100).style('opacity', '0').each('end', () => {
+                d3.select('.scene-description').text(d.description);
+                d3.select('.scene-date').text(convertUSDataToLocal(d.date));
+                d3.selectAll('.scene-presentation *').transition().duration(100).style('opacity', '100%');
+            });
             d3.select(this).attr('class', 'scene-selected');
-            d3.select('.scene-description').text(d.description);
-            d3.select('.scene-date').text(convertUSDataToLocal(d.date));
+            // d3.select('.scene-description').text(d.description);
+            // d3.select('.scene-date').text(convertUSDataToLocal(d.date));
+            // d3.selectAll('.scene-presentation').transition().duration(250).style('bottom', '0pt');
         }
-
-        // Tooltip
-        // d3.select('body')
-        //     .append('div')
-        //     .attr('id', 'tooltip');
 
         // Draw appearances
         svg.selectAll('.scene').selectAll('.appearance').data(function(d){
@@ -199,8 +201,8 @@ function doit(ref, scenes2) {
             })
             .attr('stroke-width', 1)
             .attr('d', narrative.link())
-            .on('mouseover', (d, i) => selectPath(svg, d.character.name))
-            .on('mouseout', (d, i) => deselectPath(svg, d.character.name));
+            .on('mouseover', d => selectPath(svg, d.character.name))
+            .on('mouseout', d => deselectPath(svg, d.character.name));
 
         // Draw intro nodes
         svg.selectAll('.intro').data(narrative.introductions())
@@ -299,8 +301,8 @@ class App extends Component {
 
     render() {
         return <div>
-            <div ref="timeline">&nbsp;</div>
-            <div>
+            <div className="timeline" ref="timeline">&nbsp;</div>
+            <div className="scene-presentation">
                 <div className="scene-date"/>
                 <div className="scene-description"/>
             </div>
@@ -324,9 +326,9 @@ class App extends Component {
     // );
     // }
 
-    makeScenes(objects) {
-        return undefined;
-    }
+    // makeScenes(objects) {
+    //     return undefined;
+    // }
 }
 
 export default App;
