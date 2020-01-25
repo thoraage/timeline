@@ -83,6 +83,8 @@ function selectPath(svg, characterName) {
 }
 
 function doit(ref, scenes2) {
+    var revertSceneFunction = null;
+
     // Request the data
     d3.json('data.json', function(err, response){
 
@@ -146,7 +148,6 @@ function doit(ref, scenes2) {
                 return 'translate('+[x,y]+')';
             })
             .on('mouseover', selectScene)
-            .on('mouseout', deselectScene)
             .append('rect')
             .attr('width', sceneWidth)
             .attr('height', function(d){
@@ -157,23 +158,27 @@ function doit(ref, scenes2) {
             .attr('rx', 3)
             .attr('ry', 3);
 
-        function deselectScene(d) {
-            d3.select(this).attr('class', 'scene');
-            d.characters.forEach(character => deselectPath(svg, character.name));
-        }
-
-        function selectScene(d) {
-            console.log(d);
-            d.characters.forEach(character => selectPath(svg, character.name));
-            d3.selectAll('.scene-presentation *').transition().duration(100).style('opacity', '0').each('end', () => {
-                d3.select('.scene-description').text(d.description);
-                d3.select('.scene-date').text(convertUSDataToLocal(d.date));
-                d3.selectAll('.scene-presentation *').transition().duration(100).style('opacity', '100%');
-            });
-            d3.select(this).attr('class', 'scene-selected');
-            // d3.select('.scene-description').text(d.description);
-            // d3.select('.scene-date').text(convertUSDataToLocal(d.date));
-            // d3.selectAll('.scene-presentation').transition().duration(250).style('bottom', '0pt');
+        function selectScene(scene) {
+            console.log(scene);
+            if (!revertSceneFunction || revertSceneFunction(scene)) {
+                d3.selectAll('.scene-presentation *').transition().duration(100).style('opacity', '0').each('end', () => {
+                    d3.select('.scene-description').text(scene.description);
+                    d3.select('.scene-date').text(convertUSDataToLocal(scene.date));
+                    d3.selectAll('.scene-presentation *').transition().duration(100).style('opacity', '100%');
+                });
+                d3.select(this).attr('class', 'scene-selected');
+                let that = this;
+                revertSceneFunction = function(newScene) {
+                    if (newScene === scene) {
+                        return false;
+                    } else {
+                        d3.select(that).attr('class', 'scene');
+                        scene.characters.forEach(character => deselectPath(svg, character.name));
+                        return true;
+                    }
+                }
+            }
+            scene.characters.forEach(character => selectPath(svg, character.name));
         }
 
         // Draw appearances
