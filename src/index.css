@@ -43,7 +43,7 @@ text .intro-text-selected {
 div .scene-presentation {
   background-color: var(--character_line);
   color: var(--background);
-  width: 30%;
+  width: 300pt;
   padding: 30pt;
   position: absolute;
   bottom: 0;
@@ -60,6 +60,15 @@ div .scene-date {
 div .scene-description {
   height: 100pt;
   overflow-y: auto;
+}
+
+div .case-selection {
+  height: 100pt;
+  width: 300pt;
+  left: 360pt;
+  padding: 30pt;
+  position: absolute;
+  bottom: 0;
 }
 
 .scene-selected rect {

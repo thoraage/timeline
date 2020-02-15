@@ -186,6 +186,15 @@ function doit(ref, scenes2) {
             scene.characters.forEach(character => selectPath(svg, character.name));
         }
 
+        // let select = d3.select('.case-selection');
+        // select.on('mouseover', () => console.log("############"))
+        //     .append('input')
+        //     .attr('type', 'checkbox')
+        //     .attr('id', 'idcheck');
+        // select.append('label')
+        //     .attr('for', 'idcheck')
+        //     .text('Tull');
+
         // Draw appearances
         svg.selectAll('.scene').selectAll('.appearance').data(function(d){
             return d.appearances;
@@ -310,12 +319,17 @@ class App extends Component {
     }
 
     render() {
+        let mycase = <div className="case-selection">
+            <input id="viss" type="checkbox"/>
+            <label for="viss">Tullball</label>
+        </div>;
         return <div>
             <div className="timeline" ref="timeline">&nbsp;</div>
             <div className="scene-presentation">
                 <div className="scene-date"/>
                 <div className="scene-description"/>
             </div>
+            { mycase }
         </div>;
     }
 
