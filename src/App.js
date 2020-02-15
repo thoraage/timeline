@@ -10,7 +10,7 @@ function capitalize(string) {
 }
 
 function makeClassName(string) {
-    return string.toLowerCase().replace(/ /g, '_');
+    return string.toLowerCase().replace(/[ .]/g, '_');
 }
 
 function convertUSDataToLocal(usDateString) {
