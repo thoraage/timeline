@@ -46,18 +46,23 @@ function getCharacterObjectForCharacterName(name) {
     return character;
 }
 
+function pickColumn(cells, columnNumber) {
+    return cells.filter(cell => cell.gs$cell.col === columnNumber.toString())
+        .map(cell => cell.gs$cell.inputValue)[0];
+}
+
+function pickColumnArray(cells, columnNumber) {
+    return (pickColumn(cells, columnNumber) || "").split(",").map(entry => getCharacterObjectForCharacterName(entry.trim()));
+}
+
 function transformCellsToScene(cells) {
-    let cell = cells.filter(cell => cell.gs$cell.col === "2");
     return {
-        characters:
-            cell.flatMap(cell => cell.gs$cell.inputValue.split(","))
-                .map(entry => getCharacterObjectForCharacterName(entry.trim())),
-        description:
-            cells.filter(cell => cell.gs$cell.col === "3")
-                .map(cell => cell.gs$cell.inputValue)[0],
-        date:
-            cells.filter(cell => cell.gs$cell.col === "1")
-                .map(cell => cell.gs$cell.inputValue)[0]
+        characters: pickColumnArray(cells, 2),
+            // cells.filt er(cell => cell.gs$cell.col === "2").flatMap(cell => cell.gs$cell.inputValue.split(","))
+            //     .map(entry => getCharacterObjectForCharacterName(entry.trim())),
+        description: pickColumn(cells, 3),
+        date: pickColumn(cells, 1),
+        cases: pickColumnArray(cells, 5)
     };
 }
 
