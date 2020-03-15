@@ -99,7 +99,6 @@ function doit(ref, scenes2) {
         scenes = wrangle(response);
 
         console.log(scenes);
-        scenes2 = transformSheetToScenes(scenes2);
         console.log(scenes2);
         scenes = scenes2;
 
@@ -109,6 +108,7 @@ function doit(ref, scenes2) {
         height = 600;
 
         // The container element (this is the HTML fragment);
+        d3.select(ref).selectAll('*').remove();
         svg = d3.select(ref).append('svg')
             .attr('id', 'narrative-chart')
             .attr('width', width)
@@ -226,9 +226,8 @@ function doit(ref, scenes2) {
         // Draw intro nodes
         svg.selectAll('.intro').data(narrative.introductions())
             .enter().call(function(s){
-            var g, text;
 
-            g = s.append('g').attr('class', 'intro');
+            let g = s.append('g').attr('class', 'intro');
 
             g.append('circle')
                 .attr('class', 'character-link')
@@ -236,26 +235,23 @@ function doit(ref, scenes2) {
                 .attr('x', -4)
                 .attr('r', 4);
 
-            text = g.append('g').attr('class','text');
+            g.append('text')
+                .attr('class', 'intro-text')
+                .attr('text-anchor', 'end')
+                .attr('y', '4px')
+                .attr('x', '-8px')
+                .text(d => d.character.name)
+                .on('mouseover', d => {
+                    selectPath(svg, d.character.name);
+                })
+                .on('mouseout', d => deselectPath(svg, d.character.name));
 
-            // Apppend two actual 'text' nodes to fake an 'outside' outline.
-            text.append('text');
-            text.append('text').attr('class', 'intro-text');
-
-            g.attr('transform', function(d){
-                var x,y;
+            g.attr('transform', d => {
+                let x,y;
                 x = Math.round(d.x);
                 y = Math.round(d.y);
                 return 'translate(' + [x,y] + ')';
             });
-
-            g.selectAll('text')
-                .attr('text-anchor', 'end')
-                .attr('y', '4px')
-                .attr('x', '-8px')
-                .text(function(d){ return d.character.name; })
-                .on('mouseover', d => selectPath(svg, d.character.name))
-                .on('mouseout', d => deselectPath(svg, d.character.name));
 
             g.select('.color')
                 .attr('class', function(d){
@@ -294,34 +290,41 @@ function doit(ref, scenes2) {
 
 class App extends Component {
 
-    async componentDidMount() {
-        let objects = await (await fetch("t.json")).json();
-        // let names = Array.from(new Set(objects.feed.entry.map(entry => entry.gs$cell)
-        //     .filter(entry => entry.col === "2")
-        //     .flatMap(entry => entry.inputValue.split(","))
-        //     .map(entry => entry.trim()))).sort();
-        // console.log(names);
-        // // const temperatureData = [8, 5, 13, 9, 12];
-        // let svg = d3.select(this.refs.timeline)
-        //     .append('svg')
-        //     .attr('id', 'narrative-chart')
-        //     .attr('width', this.width)
-        //     .attr('height', this.height);
-        //
-        // let scenes = this.makeScenes(objects);
-        doit(this.refs.timeline, objects);
-            // .selectAll("h2")
-            // .data(names)
-            // .enter()
-            // .append("h2")
-            // .text(name => name);
-            // .image(name => "entities/" + name + ".png");
+
+    constructor(props, context) {
+        super(props, context);
+        this.state = {
+            selectables: []
+        };
+    }
+
+    componentDidMount() {
+        fetch("t.json")
+            .then(object => object.json())
+            .then(scenes => transformSheetToScenes(scenes))
+            .then(scenes => {
+                let doely  = scenes.flatMap(scene => scene.cases);
+                this.setState({ selectables: [...new Set(doely)]});
+                this.scenes = scenes;
+                doit(this.refs.timeline, scenes);
+            });
+    }
+
+    fjolter(id) {
+        let filteredScenes = this.scenes.filter(scene => scene.cases.some(c => c.id === id));
+        console.log(filteredScenes.length);
+        console.log(id);
+        return filteredScenes;
     }
 
     render() {
         let mycase = <div className="case-selection">
-            <input id="viss" type="checkbox"/>
-            <label for="viss">Tullball</label>
+            {this.state.selectables.map(selectable =>
+                <div>
+                    <input id={ 'selectable-' + selectable.id } type="checkbox" onChange={() => doit(this.refs.timeline, this.fjolter(selectable.id))}/>
+                    <label htmlFor={ 'selectable-' + selectable.id }>{selectable.name}</label>
+                </div>
+            )}
         </div>;
         return <div>
             <div className="timeline" ref="timeline">&nbsp;</div>
